@@ -361,3 +361,9 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Runtime user-uploaded files
+PCG/App_Data/uploads/*
+PCG/App_Data/upload_temp/*
+!PCG/App_Data/uploads/.gitkeep
+!PCG/App_Data/upload_temp/.gitkeep
