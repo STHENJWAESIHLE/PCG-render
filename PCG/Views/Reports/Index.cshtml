@@ -1,0 +1,123 @@
+@model List<ReportRowVm>
+@using PCG.Models.Reports
+@{
+    ViewData["Title"] = "Reports";
+    var filter = (ReportFilterModel)(ViewBag.Filter ?? new ReportFilterModel());
+    var spend = (SpendSummaryVm)ViewBag.Spend!;
+    var vendors = (List<VendorAnalysisRow>)ViewBag.Vendors!;
+    var tax = (TaxVatSummaryVm)ViewBag.Tax!;
+}
+
+<div class="pcg-page-header">
+    <h1 class="pcg-title">Reports</h1>
+    <p class="text-muted mb-0">Filter by date, vendor, status, and amount. Export to Excel or PDF.</p>
+</div>
+
+<form method="get" class="pcg-filter-bar row g-2 align-items-end">
+    <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Date from</label>
+        <input class="form-control" type="date" name="DateFrom" value="@filter.DateFrom?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Date to</label>
+        <input class="form-control" type="date" name="DateTo" value="@filter.DateTo?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Vendor contains</label>
+        <input class="form-control" name="Vendor" value="@filter.Vendor" placeholder="Name…" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Approval status</label>
+        <select class="form-select" name="ApprovalStatusFilter">
+            @if (string.IsNullOrEmpty(filter.ApprovalStatusFilter)) { <option value="" selected>All</option> } else { <option value="">All</option> }
+            @if (filter.ApprovalStatusFilter == "Pending") { <option value="Pending" selected>Pending</option> } else { <option value="Pending">Pending</option> }
+            @if (filter.ApprovalStatusFilter == "Approved") { <option value="Approved" selected>Approved</option> } else { <option value="Approved">Approved</option> }
+            @if (filter.ApprovalStatusFilter == "Rejected") { <option value="Rejected" selected>Rejected</option> } else { <option value="Rejected">Rejected</option> }
+        </select>
+    </div>
+    <div class="col-md-1">
+        <label class="form-label small fw-semibold mb-1">Amt min</label>
+        <input class="form-control" type="number" step="0.01" name="AmountMin" value="@filter.AmountMin" />
+    </div>
+    <div class="col-md-1">
+        <label class="form-label small fw-semibold mb-1">Amt max</label>
+        <input class="form-control" type="number" step="0.01" name="AmountMax" value="@filter.AmountMax" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Report view</label>
+        <select class="form-select" name="ReportView">
+            @if (filter.ReportView == "SpendSummary") { <option value="SpendSummary" selected>Spend summary</option> } else { <option value="SpendSummary">Spend summary</option> }
+            @if (filter.ReportView == "VendorAnalysis") { <option value="VendorAnalysis" selected>Vendor analysis</option> } else { <option value="VendorAnalysis">Vendor analysis</option> }
+            @if (filter.ReportView == "TaxVat") { <option value="TaxVat" selected>Tax / VAT</option> } else { <option value="TaxVat">Tax / VAT</option> }
+        </select>
+    </div>
+    <div class="col-12 d-flex flex-wrap gap-2 mt-2">
+        <button type="submit" class="btn btn-primary">Apply filters</button>
+        <a class="btn btn-outline-secondary" href="@(Url.Action("ExportExcel", "Reports") + Context.Request.QueryString)">Export Excel</a>
+        <a class="btn btn-outline-secondary" href="@(Url.Action("ExportPdf", "Reports") + Context.Request.QueryString)">Export PDF</a>
+    </div>
+</form>
+
+@if (filter.ReportView == "SpendSummary" || string.IsNullOrEmpty(filter.ReportView))
+{
+    <div class="pcg-card pcg-card--tight mb-4">
+        <h2 class="pcg-section-title">Spend summary</h2>
+        <ul class="mb-0 ps-3">
+            <li>Total invoices: <strong>@spend.TotalInvoices.ToString("N2")</strong></li>
+            <li>Total credit notes: <strong>@spend.TotalCreditNotes.ToString("N2")</strong></li>
+            <li>Net (invoices − credit notes): <strong>@spend.NetSpend.ToString("N2")</strong></li>
+            <li>Documents in filter: <strong>@spend.DocumentCount</strong></li>
+        </ul>
+    </div>
+}
+
+@if (filter.ReportView == "VendorAnalysis")
+{
+    <h2 class="pcg-section-title">Vendor analysis</h2>
+    <div class="pcg-table-wrap mb-4">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Vendor</th><th>Net total</th><th>Count</th></tr></thead>
+            <tbody>
+            @foreach (var v in vendors)
+            {
+                <tr><td>@v.Vendor</td><td>@v.TotalAmount.ToString("N2")</td><td>@v.Count</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (filter.ReportView == "TaxVat")
+{
+    <div class="pcg-card pcg-card--tight mb-4">
+        <h2 class="pcg-section-title">Tax / VAT</h2>
+        <p class="mb-1">Sum of VAT amounts: <strong>@tax.TotalVat.ToString("N2")</strong></p>
+        <p class="text-muted small mb-0">Net document amounts in filter: @tax.TotalNet.ToString("N2")</p>
+    </div>
+}
+
+<h2 class="pcg-section-title mt-4">Filtered documents</h2>
+<div class="pcg-table-wrap">
+    <table class="table table-striped table-sm mb-0">
+        <thead>
+            <tr>
+                <th>Id</th><th>Type</th><th>Invoice #</th><th>Vendor</th><th>Date</th><th>Amount</th><th>VAT</th><th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var r in Model)
+        {
+            <tr>
+                <td>@r.Id</td>
+                <td>@r.Type</td>
+                <td>@r.InvoiceNumber</td>
+                <td>@r.Vendor</td>
+                <td>@(r.DocumentDate?.ToString("yyyy-MM-dd") ?? "—")</td>
+                <td>@(r.Amount?.ToString("N2") ?? "—")</td>
+                <td>@(r.VatAmount?.ToString("N2") ?? "—")</td>
+                <td>@r.Status</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

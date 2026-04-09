@@ -1,0 +1,82 @@
+/* Identity UI (login, register, etc.) — match PCG theme */
+.pcg-identity-main {
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pcg-identity-main h1,
+.pcg-identity-main h2 {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--pcg-black);
+}
+
+.pcg-identity-main h1 {
+  font-size: 1.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.pcg-identity-main > .row {
+  justify-content: center;
+}
+
+.pcg-identity-main .col-md-4,
+.pcg-identity-main .col-md-6 {
+  flex: 0 0 100%;
+  max-width: 420px;
+}
+
+@media (min-width: 768px) {
+  .pcg-identity-main .col-md-4 {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 420px;
+  }
+  .pcg-identity-main .col-md-6 {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 480px;
+  }
+}
+
+.pcg-identity-main section {
+  background: var(--pcg-white);
+  border-radius: var(--pcg-radius);
+  box-shadow: var(--pcg-shadow);
+  border: 1px solid var(--pcg-border-subtle);
+  padding: 1.5rem 1.35rem;
+  margin-bottom: 1.25rem;
+}
+
+.pcg-identity-main hr {
+  border-color: var(--pcg-border-subtle);
+  opacity: 1;
+}
+
+.pcg-identity-main .form-floating > label {
+  color: var(--pcg-muted);
+}
+
+.pcg-identity-main .form-check-label {
+  color: var(--pcg-black-soft);
+  font-size: 0.9rem;
+}
+
+.pcg-identity-main ul {
+  padding-left: 1.25rem;
+}
+
+.pcg-identity-main .text-danger,
+.pcg-identity-main .validation-summary-errors {
+  font-size: 0.9rem;
+}
+
+.pcg-identity-main a:not(.btn) {
+  color: var(--pcg-baby-700);
+  font-weight: 500;
+}
+
+.pcg-identity-main a:not(.btn):hover {
+  color: var(--pcg-black);
+}

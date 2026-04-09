@@ -1,0 +1,40 @@
+@model PCG.Models.ViewModels.UploadConfirmVm
+@{
+    ViewData["Title"] = "Confirm possible duplicate";
+}
+
+<div class="pcg-page-header">
+    <h1 class="pcg-title">Confirm upload</h1>
+    <p class="text-muted mb-0">Review the possible duplicate before saving.</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="alert alert-warning">
+            @(ViewData["DupMessage"] ?? "Another document may match this vendor and amount.")
+        </div>
+        <div class="pcg-card">
+            <form asp-action="UploadConfirm" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="All" class="text-danger small"></div>
+                <input type="hidden" asp-for="TempFileName" />
+                <input type="hidden" asp-for="Type" />
+                <input type="hidden" asp-for="OriginalFileName" />
+                <input type="hidden" asp-for="ContentType" />
+                <input type="hidden" asp-for="FileSizeBytes" />
+                <input type="hidden" asp-for="FileSha256" />
+                <input type="hidden" asp-for="ExtractionJson" />
+                <div class="form-check mb-4">
+                    <input asp-for="ConfirmVendorAmountDuplicate" class="form-check-input" />
+                    <label asp-for="ConfirmVendorAmountDuplicate" class="form-check-label fw-semibold">I confirm this document is not a duplicate and may be stored.</label>
+                </div>
+                <button type="submit" class="btn btn-warning">Save document</button>
+                <a class="btn btn-link text-decoration-none" asp-action="Upload">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

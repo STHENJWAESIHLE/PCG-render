@@ -1,0 +1,23 @@
+/* PCG MindRift — design tokens (baby blue · white · black) */
+:root {
+  --pcg-black: #0d1117;
+  --pcg-black-soft: #1a2332;
+  --pcg-white: #ffffff;
+  --pcg-baby-50: #f0f9fd;
+  --pcg-baby-100: #dff3fb;
+  --pcg-baby-200: #bfe8f6;
+  --pcg-baby-300: #8fd8ef;
+  --pcg-baby-400: #5cc5e5;
+  --pcg-baby-500: #3ab0d9;
+  --pcg-baby-600: #2493bd;
+  --pcg-baby-700: #1e7698;
+  --pcg-muted: #5a6b7c;
+  --pcg-border: #b8dce8;
+  --pcg-border-subtle: rgba(36, 147, 189, 0.22);
+  --pcg-radius: 14px;
+  --pcg-radius-sm: 10px;
+  --pcg-shadow: 0 4px 24px rgba(13, 17, 23, 0.07);
+  --pcg-shadow-nav: 0 1px 0 var(--pcg-border-subtle), 0 8px 32px rgba(13, 17, 23, 0.04);
+  --pcg-font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --pcg-focus: 0 0 0 3px rgba(58, 176, 217, 0.45);
+}

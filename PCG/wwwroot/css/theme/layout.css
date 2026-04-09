@@ -1,0 +1,99 @@
+/* Shell: header, main, footer */
+.pcg-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--pcg-font);
+  color: var(--pcg-black);
+  background: linear-gradient(180deg, var(--pcg-baby-50) 0%, var(--pcg-white) 28%, var(--pcg-baby-50) 100%);
+  background-attachment: fixed;
+}
+
+.pcg-app main {
+  flex: 1 0 auto;
+}
+
+.pcg-navbar {
+  background: var(--pcg-white) !important;
+  box-shadow: var(--pcg-shadow-nav);
+  border: none !important;
+  border-bottom: 3px solid var(--pcg-baby-400) !important;
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
+}
+
+.pcg-navbar .navbar-brand {
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+  color: var(--pcg-black) !important;
+  text-decoration: none;
+}
+
+.pcg-navbar .pcg-brand-mark {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.pcg-navbar .pcg-brand-divider {
+  color: var(--pcg-baby-400);
+  font-weight: 500;
+  margin: 0 0.2em;
+}
+
+.pcg-navbar .pcg-brand-sub {
+  color: var(--pcg-baby-600);
+  font-weight: 600;
+}
+
+.pcg-navbar .nav-link {
+  color: var(--pcg-black-soft) !important;
+  font-weight: 500;
+  font-size: 0.92rem;
+  padding: 0.5rem 0.85rem !important;
+  border-radius: var(--pcg-radius-sm);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.pcg-navbar .nav-link:hover,
+.pcg-navbar .nav-link:focus {
+  color: var(--pcg-baby-700) !important;
+  background: var(--pcg-baby-100);
+}
+
+.pcg-navbar .navbar-toggler {
+  border-color: var(--pcg-border);
+}
+
+.pcg-navbar .navbar-toggler-icon {
+  filter: invert(0.15);
+}
+
+.pcg-main-inner {
+  padding-top: 0.5rem;
+  padding-bottom: 3rem;
+}
+
+.pcg-footer {
+  flex-shrink: 0;
+  background: var(--pcg-black);
+  color: rgba(255, 255, 255, 0.78);
+  border-top: 3px solid var(--pcg-baby-500);
+  padding: 1.25rem 0;
+  margin-top: auto;
+  position: relative;
+  width: 100%;
+}
+
+.pcg-footer a {
+  color: var(--pcg-baby-300);
+  text-decoration: none;
+}
+
+.pcg-footer a:hover {
+  color: var(--pcg-baby-100);
+}
+
+.pcg-footer .pcg-footer-inner {
+  font-size: 0.875rem;
+}

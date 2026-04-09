@@ -1,0 +1,78 @@
+@model InsightsViewModel
+@using PCG.Models.Reports
+@{
+    ViewData["Title"] = "AI insights";
+    var filter = (ReportFilterModel)(ViewBag.Filter ?? new ReportFilterModel());
+}
+
+<div class="pcg-page-header">
+    <h1 class="pcg-title">AI-driven insights</h1>
+    <p class="text-muted mb-0">Trends, anomalies, and spend commentary with AI narrative.</p>
+</div>
+
+<form method="get" class="pcg-filter-bar row g-2 align-items-end mb-4">
+    <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Date from</label>
+        <input class="form-control" type="date" name="DateFrom" value="@filter.DateFrom?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small fw-semibold mb-1">Date to</label>
+        <input class="form-control" type="date" name="DateTo" value="@filter.DateTo?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small fw-semibold mb-1">Vendor contains</label>
+        <input class="form-control" name="Vendor" value="@filter.Vendor" placeholder="Filter vendor…" />
+    </div>
+    <div class="col-12 d-flex flex-wrap gap-2 mt-2">
+        <button type="submit" class="btn btn-primary">Refresh insights</button>
+        <a class="btn btn-outline-secondary" href="@(Url.Action("Index", "Reports") + Context.Request.QueryString)">Open reports</a>
+    </div>
+</form>
+
+<h2 class="pcg-section-title">Monthly trends</h2>
+<p class="text-muted small mb-2">Signed amounts: invoices positive, credit notes negative.</p>
+<div class="pcg-table-wrap mb-4">
+    <table class="table table-sm mb-0">
+        <thead><tr><th>Month</th><th>Amount</th><th>Documents</th></tr></thead>
+        <tbody>
+        @foreach (var t in Model.MonthlyTrends)
+        {
+            <tr><td>@t.Period</td><td>@t.Amount.ToString("N2")</td><td>@t.Count</td></tr>
+        }
+        @if (!Model.MonthlyTrends.Any())
+        {
+            <tr><td colspan="3" class="text-muted">No data in range.</td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+<h2 class="pcg-section-title">Anomalies &amp; flags</h2>
+<div class="pcg-card pcg-card--tight mb-4">
+    <ul class="mb-0 ps-3">
+    @foreach (var a in Model.Anomalies)
+    {
+        <li class="mb-2"><span class="badge bg-dark">@a.Severity</span> @a.Description</li>
+    }
+    @if (!Model.Anomalies.Any())
+    {
+        <li class="text-muted">No anomalies detected for current filters.</li>
+    }
+    </ul>
+</div>
+
+<h2 class="pcg-section-title">Spending snapshot</h2>
+<div class="pcg-card pcg-card--tight mb-4">
+    <ul class="mb-0 ps-3">
+    @foreach (var b in Model.SpendingBullets)
+    {
+        <li>@b</li>
+    }
+    </ul>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.AiNarrative))
+{
+    <h2 class="pcg-section-title">AI narrative</h2>
+    <div class="pcg-insights-narrative mb-4" style="white-space: pre-wrap;">@Model.AiNarrative</div>
+}

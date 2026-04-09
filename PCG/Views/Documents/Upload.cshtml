@@ -1,0 +1,251 @@
+@model PCG.Models.ViewModels.DocumentUploadVm
+@using PCG.Authorization
+@{
+    ViewData["Title"] = "Upload Document";
+    var isExternal = User.IsExternalUser();
+}
+
+<div class="pcg-page-header">
+    <h1 class="pcg-title">Upload Document</h1>
+    <p class="text-muted mb-0">@(isExternal ? "Upload your invoices or credit notes for approval." : "Upload invoices or credit notes. PDF, PNG, JPG files accepted.")</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form asp-action="Upload" method="post" enctype="multipart/form-data" id="uploadForm">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    @* Document Type Selection *@
+                    <div class="mb-4">
+                        <label asp-for="Type" class="form-label fw-semibold">Document Type</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="form-check card h-100 p-3 border cursor-pointer hover-shadow" id="typeInvoice">
+                                    <input asp-for="Type" class="form-check-input" type="radio" value="Invoice" id="Type_Invoice" checked>
+                                    <label class="form-check-label w-100" for="Type_Invoice">
+                                        <div class="d-flex align-items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="text-primary me-3" viewBox="0 0 16 16">
+                                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z"/>
+                                                <path d="M5.5 10.5A.5.5 0 0 1 6 10h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z"/>
+                                                <path d="M4 7a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 7z"/>
+                                            </svg>
+                                            <div>
+                                                <strong>Invoice</strong>
+                                                <small class="d-block text-muted">Bill from vendor</small>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-check card h-100 p-3 border cursor-pointer hover-shadow" id="typeCreditNote">
+                                    <input asp-for="Type" class="form-check-input" type="radio" value="CreditNote" id="Type_CreditNote">
+                                    <label class="form-check-label w-100" for="Type_CreditNote">
+                                        <div class="d-flex align-items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="text-success me-3" viewBox="0 0 16 16">
+                                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z"/>
+                                                <path fill-rule="evenodd" d="M5.5 10a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 0-1H6a.5.5 0 0 0-.5.5z"/>
+                                                <path fill-rule="evenodd" d="M11.854 4.146a.5.5 0 0 0-.708-.708l-3 3a.5.5 0 0 0 0 .708l3 3a.5.5 0 0 0 .708-.708L9.207 7.5l2.647-2.646z"/>
+                                            </svg>
+                                            <div>
+                                                <strong>Credit Note</strong>
+                                                <small class="d-block text-muted">Refund / adjustment</small>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <span asp-validation-for="Type" class="text-danger small d-block mt-1"></span>
+                    </div>
+
+                    @* Drag & Drop File Upload Zone *@
+                    <div class="mb-4">
+                        <label asp-for="File" class="form-label fw-semibold">File</label>
+                        <div id="dropZone" class="border border-2 border-dashed rounded-3 p-5 text-center cursor-pointer" style="border-color: #dee2e6; transition: all 0.2s;">
+                            <input asp-for="File" type="file" class="d-none" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tiff" />
+                            <div id="uploadPrompt">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="text-muted mb-3" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                    <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                                </svg>
+                                <p class="mb-1 fw-semibold text-dark">Drag & drop your file here</p>
+                                <p class="text-muted small mb-2">or click to browse</p>
+                                <small class="text-muted">PDF, PNG, JPG up to 10MB</small>
+                            </div>
+                            <div id="filePreview" class="d-none">
+                                <div class="d-flex align-items-center justify-content-center gap-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="text-primary" viewBox="0 0 16 16">
+                                        <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5z"/>
+                                    </svg>
+                                    <div class="text-start">
+                                        <p id="fileName" class="mb-0 fw-semibold"></p>
+                                        <small id="fileSize" class="text-muted"></small>
+                                    </div>
+                                    <button type="button" id="removeFile" class="btn btn-sm btn-outline-danger">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <span asp-validation-for="File" class="text-danger small d-block mt-1"></span>
+                    </div>
+
+                    @* Duplicate Confirmation *@
+                    <div class="form-check mb-4 p-3 bg-light rounded">
+                        <input asp-for="ConfirmVendorAmountDuplicate" class="form-check-input" />
+                        <label asp-for="ConfirmVendorAmountDuplicate" class="form-check-label small">
+                            <strong>Possible duplicate confirmation</strong><br>
+                            <span class="text-muted">Check this if warned about vendor+amount match and you confirm this is NOT a duplicate.</span>
+                        </label>
+                    </div>
+
+                    @* Submit Buttons *@
+                    <div class="d-grid gap-2 d-sm-flex">
+                        <button type="submit" class="btn btn-primary btn-lg flex-fill" id="submitBtn">
+                            <span class="submit-text">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                    <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                                </svg>
+                                Upload & Process
+                            </span>
+                            <span class="loading-text d-none">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Processing...
+                            </span>
+                        </button>
+                        <a class="btn btn-outline-secondary btn-lg" asp-action="Index">Cancel</a>
+                    </div>
+                </form>
+
+                @* Info Box for External Users *@
+                @if (isExternal)
+                {
+                    <div class="alert alert-info mt-4 mb-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+                        <strong>What happens next?</strong><br>
+                        <small>Your document will go through a 3-stage approval process: Reviewer → Manager → Admin. You'll be able to track progress in "My Documents".</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const uploadPrompt = document.getElementById('uploadPrompt');
+            const filePreview = document.getElementById('filePreview');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const removeFile = document.getElementById('removeFile');
+            const uploadForm = document.getElementById('uploadForm');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Click to browse
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            // File selected
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Drag and drop events
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.style.borderColor = '#0d6efd';
+                    dropZone.style.backgroundColor = '#f8f9fa';
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.style.borderColor = '#dee2e6';
+                    dropZone.style.backgroundColor = 'transparent';
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                fileInput.files = files;
+                handleFileSelect({ target: fileInput });
+            }
+
+            function handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    uploadPrompt.classList.add('d-none');
+                    filePreview.classList.remove('d-none');
+                    fileName.textContent = file.name;
+                    fileSize.textContent = formatFileSize(file.size);
+                    dropZone.classList.add('border-primary');
+                }
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            removeFile.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fileInput.value = '';
+                uploadPrompt.classList.remove('d-none');
+                filePreview.classList.add('d-none');
+                dropZone.classList.remove('border-primary');
+            });
+
+            // Show loading state on submit only if file is selected
+            uploadForm.addEventListener('submit', (e) => {
+                const file = fileInput.files[0];
+                if (!file || file.size === 0) {
+                    // No file selected - don't show loading, let server validation handle it
+                    return;
+                }
+                submitBtn.disabled = true;
+                submitBtn.querySelector('.submit-text').classList.add('d-none');
+                submitBtn.querySelector('.loading-text').classList.remove('d-none');
+            });
+
+            // Type selection styling
+            const typeInvoice = document.getElementById('typeInvoice');
+            const typeCreditNote = document.getElementById('typeCreditNote');
+            const typeInputs = document.querySelectorAll('input[name="Type"]');
+
+            function updateTypeStyles() {
+                const selected = document.querySelector('input[name="Type"]:checked').value;
+                typeInvoice.classList.toggle('border-primary', selected === 'Invoice');
+                typeInvoice.classList.toggle('bg-light', selected === 'Invoice');
+                typeCreditNote.classList.toggle('border-primary', selected === 'CreditNote');
+                typeCreditNote.classList.toggle('bg-light', selected === 'CreditNote');
+            }
+
+            typeInputs.forEach(input => {
+                input.addEventListener('change', updateTypeStyles);
+            });
+
+            updateTypeStyles();
+        });
+    </script>
+}

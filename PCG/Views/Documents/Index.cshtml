@@ -1,0 +1,133 @@
+@model IEnumerable<Document>
+@using PCG.Authorization
+@{
+    ViewData["Title"] = "Documents";
+    var isExternal = User.IsExternalUser();
+}
+
+<div class="pcg-page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+        <h1 class="pcg-title">@(isExternal ? "My Documents" : "Documents")</h1>
+        <p class="text-muted mb-0">@(isExternal ? "Your uploaded invoices and credit notes with approval status." : "Invoices and credit notes with three-step approval status.")</p>
+    </div>
+    @if (User.CanUpload())
+    {
+        <a class="btn btn-primary" asp-action="Upload">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-1"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>
+            Upload Document
+        </a>
+    }
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-lg-4">
+        <div class="input-group">
+            <span class="input-group-text bg-white"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="text-muted" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg></span>
+            <input type="text" id="docSearch" class="form-control" placeholder="Search by vendor, invoice #..." />
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="btn-group" role="group">
+            <input type="radio" class="btn-check" name="statusFilter" id="filterAll" value="all" checked>
+            <label class="btn btn-outline-secondary" for="filterAll">All</label>
+            <input type="radio" class="btn-check" name="statusFilter" id="filterPending" value="pending">
+            <label class="btn btn-outline-warning" for="filterPending">Pending</label>
+            <input type="radio" class="btn-check" name="statusFilter" id="filterApproved" value="approved">
+            <label class="btn btn-outline-success" for="filterApproved">Approved</label>
+            <input type="radio" class="btn-check" name="statusFilter" id="filterRejected" value="rejected">
+            <label class="btn btn-outline-danger" for="filterRejected">Rejected</label>
+        </div>
+    </div>
+</div>
+
+<div class="pcg-table-wrap">
+    <table class="table table-hover align-middle" id="documentsTable">
+        <thead class="table-light">
+            <tr>
+                <th class="text-nowrap">Doc #</th>
+                <th>Type</th>
+                <th>Invoice #</th>
+                <th>Vendor</th>
+                <th class="text-nowrap">Date</th>
+                <th class="text-end">Amount</th>
+                <th>Status</th>
+                <th class="text-nowrap">Uploaded</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var d in Model)
+        {
+            var statusClass = d.Status switch
+            {
+                DocumentStatus.PendingReviewer => "table-warning",
+                DocumentStatus.PendingManager => "table-info",
+                DocumentStatus.PendingAdmin => "table-primary",
+                DocumentStatus.Approved => "table-success",
+                DocumentStatus.Rejected => "table-danger",
+                _ => ""
+            };
+            var statusBadge = d.Status switch
+            {
+                DocumentStatus.PendingReviewer => ("badge bg-warning text-dark", "Step 1: Reviewer"),
+                DocumentStatus.PendingManager => ("badge bg-info", "Step 2: Manager"),
+                DocumentStatus.PendingAdmin => ("badge bg-primary", "Step 3: Admin"),
+                DocumentStatus.Approved => ("badge bg-success", "Approved"),
+                DocumentStatus.Rejected => ("badge bg-danger", "Rejected"),
+                _ => ("badge bg-secondary", "Unknown")
+            };
+            var typeIcon = d.Type == DocumentType.Invoice 
+                ? "<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='text-primary me-1' viewBox='0 0 16 16'><path d='M5.5 10.5A.5.5 0 0 1 6 10h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z'/><path d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z'/></svg>"
+                : "<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='text-success me-1' viewBox='0 0 16 16'><path fill-rule='evenodd' d='M11.854 1.146a.5.5 0 0 1 0 .708L9.707 3.793l-2.647-2.646a.5.5 0 0 1 .708-.708l2.5 2.5a.5.5 0 0 1 0 .708l-2.5 2.5a.5.5 0 0 1-.708-.708l2.646-2.646z'/><path d='M5.5 10.5A.5.5 0 0 1 6 10h4a.5.5 0 0 1 0 1H6a.5.5 0 0 1-.5-.5z'/><path d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM2 2a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H2z'/></svg>";
+            
+            <tr class="@statusClass" data-status="@d.Status.ToString().ToLower()" data-search="@(d.Vendor?.ToLower() ?? "") @(d.InvoiceNumber?.ToLower() ?? "")">
+                <td class="fw-semibold">#@d.Id</td>
+                <td>@Html.Raw(typeIcon)@d.Type</td>
+                <td>@(string.IsNullOrEmpty(d.InvoiceNumber) ? "—" : d.InvoiceNumber)</td>
+                <td class="text-truncate" style="max-width: 200px;" title="@d.Vendor">@(string.IsNullOrEmpty(d.Vendor) ? "—" : d.Vendor)</td>
+                <td><small class="text-muted">@(d.DocumentDate?.ToString("yyyy-MM-dd") ?? "—")</small></td>
+                <td class="text-end fw-semibold">@(d.Amount?.ToString("N2") ?? "—")</td>
+                <td><span class="@statusBadge.Item1">@statusBadge.Item2</span></td>
+                <td><small class="text-muted">@d.UploadedAtUtc.ToString("MMM dd, HH:mm")</small></td>
+                <td>
+                    <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@d.Id">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" class="me-1"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/><path d="M14 8a6 6 0 1 0-12 0 6 6 0 0 0 12 0zM8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1z"/></svg>
+                        View
+                    </a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('docSearch');
+            const statusFilters = document.querySelectorAll('input[name="statusFilter"]');
+            const rows = document.querySelectorAll('#documentsTable tbody tr');
+
+            function filterTable() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const statusFilter = document.querySelector('input[name="statusFilter"]:checked').value;
+
+                rows.forEach(row => {
+                    const searchData = row.getAttribute('data-search') || '';
+                    const statusData = row.getAttribute('data-status') || '';
+                    
+                    const matchesSearch = searchTerm === '' || searchData.includes(searchTerm);
+                    const matchesStatus = statusFilter === 'all' || 
+                        (statusFilter === 'pending' && (statusData.includes('pending'))) ||
+                        (statusFilter === 'approved' && statusData === 'approved') ||
+                        (statusFilter === 'rejected' && statusData === 'rejected');
+
+                    row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+                });
+            }
+
+            searchInput?.addEventListener('input', filterTable);
+            statusFilters.forEach(f => f.addEventListener('change', filterTable));
+        });
+    </script>
+}

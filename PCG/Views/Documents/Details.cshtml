@@ -1,0 +1,255 @@
+@using PCG.Authorization
+@model Document
+@{
+    ViewData["Title"] = $"Document #{Model.Id}";
+    var stage = Model.Status switch
+    {
+        DocumentStatus.PendingReviewer => ("Step 1 — Reviewer", RoleNames.Reviewer),
+        DocumentStatus.PendingManager => ("Step 2 — Manager", RoleNames.Manager),
+        DocumentStatus.PendingAdmin => ("Step 3 — Admin", RoleNames.Admin),
+        _ => ((string?)null, (string?)null)
+    };
+    // External users cannot approve - only internal staff
+    bool canAct = false;
+    if (stage.Item2 != null && !User.IsExternalUser())
+    {
+        canAct = User.IsInRole(RoleNames.Admin) || User.IsInRole(stage.Item2);
+    }
+
+    // Workflow progress calculation
+    var workflowStep = Model.Status switch
+    {
+        DocumentStatus.PendingReviewer => 1,
+        DocumentStatus.PendingManager => 2,
+        DocumentStatus.PendingAdmin => 3,
+        DocumentStatus.Approved => 4,
+        DocumentStatus.Rejected => 0,
+        _ => 0
+    };
+    var totalSteps = 4;
+    var progressPercent = (workflowStep * 100) / totalSteps;
+}
+
+<div class="pcg-page-header">
+    <h1 class="pcg-title">Document @Model.Id</h1>
+    <p class="text-muted mb-0">Details, extraction, and approval workflow.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="pcg-card pcg-card--tight">
+            <dl class="row pcg-dl mb-0">
+                <dt class="col-sm-4">Type</dt><dd class="col-sm-8">@Model.Type</dd>
+                <dt class="col-sm-4">File</dt><dd class="col-sm-8"><a asp-action="Download" asp-route-id="@Model.Id">@Model.OriginalFileName</a> <span class="text-muted">(@Model.FileSizeBytes bytes)</span></dd>
+                <dt class="col-sm-4">Invoice #</dt><dd class="col-sm-8">@Model.InvoiceNumber</dd>
+                <dt class="col-sm-4">Vendor</dt><dd class="col-sm-8">@Model.Vendor</dd>
+                <dt class="col-sm-4">Document date</dt><dd class="col-sm-8">@(Model.DocumentDate?.ToString("yyyy-MM-dd") ?? "—")</dd>
+                <dt class="col-sm-4">Amount</dt><dd class="col-sm-8">@(Model.Amount?.ToString("N2") ?? "—")</dd>
+                <dt class="col-sm-4">VAT</dt><dd class="col-sm-8">@(Model.VatAmount?.ToString("N2") ?? "—")</dd>
+                <dt class="col-sm-4">Duplicate flag</dt>
+                <dd class="col-sm-8">
+                    @Model.DuplicateFlag
+                    @if (Model.VendorAmountOverrideAcknowledged)
+                    { <span class="text-muted">(vendor/amount override acknowledged)</span> }
+                </dd>
+                <dt class="col-sm-4">Workflow</dt>
+                <dd class="col-sm-8">
+                    @if (Model.Status == DocumentStatus.Approved)
+                    { <span class="badge pcg-badge-approved">Approved (all 3 steps)</span> }
+                    else if (Model.Status == DocumentStatus.Rejected)
+                    { <span class="badge pcg-badge-rejected">Rejected</span> }
+                    else
+                    { <span class="badge pcg-badge-pending">@stage.Item1</span> }
+                </dd>
+                @if (!string.IsNullOrEmpty(Model.RejectionReason))
+                {
+                    <dt class="col-sm-4">Rejection</dt><dd class="col-sm-8 text-danger">@Model.RejectionReason</dd>
+                }
+            </dl>
+            <div class="pcg-divider-top">
+                @if (User.IsInRole(RoleNames.Admin) && Model.Status != DocumentStatus.Approved)
+                {
+                    <a class="btn btn-outline-secondary btn-sm" asp-action="Edit" asp-route-id="@Model.Id">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/></svg>
+                        Edit fields (admin)
+                    </a>
+                }
+                else if (Model.Status == DocumentStatus.PendingReviewer && User.FindFirstValue(ClaimTypes.NameIdentifier) == Model.UploadedById)
+                {
+                    <a class="btn btn-outline-secondary btn-sm" asp-action="Edit" asp-route-id="@Model.Id">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/></svg>
+                        Edit extracted fields
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        @* Workflow Progress Card *@
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Approval Workflow</span>
+                @if (Model.Status == DocumentStatus.Approved)
+                {<span class="badge bg-success">Complete</span>}
+                else if (Model.Status == DocumentStatus.Rejected)
+                {<span class="badge bg-danger">Rejected</span>}
+                else
+                {<span class="badge bg-warning text-dark">In Progress</span>}
+            </div>
+            <div class="card-body">
+                @if (Model.Status != DocumentStatus.Rejected)
+                {
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar @(Model.Status == DocumentStatus.Approved ? "bg-success" : "bg-primary")" 
+                             role="progressbar" style="width: @progressPercent%" 
+                             aria-valuenow="@workflowStep" aria-valuemin="0" aria-valuemax="4"></div>
+                    </div>
+                }
+                
+                <div class="d-flex justify-content-between text-center mb-3">
+                    <div class="flex-fill">
+                        <div class="rounded-circle mx-auto mb-1 d-flex align-items-center justify-content-center" 
+                             style="width: 32px; height: 32px; background: @(workflowStep >= 1 ? "#198754" : "#e9ecef"); color: @(workflowStep >= 1 ? "white" : "#6c757d");">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+                        </div>
+                        <small class="text-muted d-block" style="font-size: 0.7rem;">Reviewer</small>
+                    </div>
+                    <div class="flex-fill">
+                        <div class="rounded-circle mx-auto mb-1 d-flex align-items-center justify-content-center" 
+                             style="width: 32px; height: 32px; background: @(workflowStep >= 2 ? "#198754" : "#e9ecef"); color: @(workflowStep >= 2 ? "white" : "#6c757d");">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+                        </div>
+                        <small class="text-muted d-block" style="font-size: 0.7rem;">Manager</small>
+                    </div>
+                    <div class="flex-fill">
+                        <div class="rounded-circle mx-auto mb-1 d-flex align-items-center justify-content-center" 
+                             style="width: 32px; height: 32px; background: @(workflowStep >= 3 ? "#198754" : "#e9ecef"); color: @(workflowStep >= 3 ? "white" : "#6c757d");">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+                        </div>
+                        <small class="text-muted d-block" style="font-size: 0.7rem;">Admin</small>
+                    </div>
+                    <div class="flex-fill">
+                        <div class="rounded-circle mx-auto mb-1 d-flex align-items-center justify-content-center" 
+                             style="width: 32px; height: 32px; background: @(workflowStep >= 4 ? "#198754" : "#e9ecef"); color: @(workflowStep >= 4 ? "white" : "#6c757d");">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+                        </div>
+                        <small class="text-muted d-block" style="font-size: 0.7rem;">Approved</small>
+                    </div>
+                </div>
+
+                @if (Model.Status is DocumentStatus.PendingReviewer or DocumentStatus.PendingManager or DocumentStatus.PendingAdmin)
+                {
+                    <div class="alert alert-light border mb-0 py-2">
+                        <small><strong>Current:</strong> @stage.Item1</small>
+                    </div>
+                }
+                else if (Model.Status == DocumentStatus.Approved)
+                {
+                    <div class="alert alert-success mb-0 py-2">
+                        <small><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg> Document fully approved</small>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (canAct && Model.Status != DocumentStatus.Approved && Model.Status != DocumentStatus.Rejected)
+        {
+            <div class="card mb-3 border-success">
+                <div class="card-header bg-success text-white">Your Action Required</div>
+                <div class="card-body">
+                    <form asp-action="Approve" asp-route-id="@Model.Id" method="post" class="mb-3" onsubmit="return confirm('Are you sure you want to APPROVE this document at the @stage.Item1 stage?');">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1">Comment (optional)</label>
+                            <input name="comment" class="form-control" placeholder="Add an optional comment..." />
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>
+                            Approve Document
+                        </button>
+                    </form>
+                    <hr class="my-3">
+                    <form asp-action="Reject" asp-route-id="@Model.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1">Rejection reason <span class="text-danger">*</span></label>
+                            <textarea name="reason" class="form-control" required rows="3" placeholder="Why are you rejecting this document?"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+                            Reject Document
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+        else if (Model.Status is DocumentStatus.PendingReviewer or DocumentStatus.PendingManager or DocumentStatus.PendingAdmin)
+        {
+            <div class="card border-info">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <div class="spinner-border text-info" style="width: 2rem; height: 2rem;" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div>
+                        @if (User.IsExternalUser())
+                        {
+                            <h6 class="mb-1">Awaiting Approval</h6>
+                            <p class="text-muted small mb-0">Your document is at <strong>@stage.Item1</strong>. You'll be notified when approved.</p>
+                        }
+                        else
+                        {
+                            <h6 class="mb-1">Waiting for @stage.Item2</h6>
+                            <p class="text-muted small mb-0">This document is pending approval from the assigned role.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<h2 class="h5 mt-4 mb-3">Approval History</h2>
+<div class="card mb-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>When</th>
+                        <th>Stage</th>
+                        <th>Decision</th>
+                        <th>By</th>
+                        <th>Comment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var h in Model.ApprovalHistory.OrderBy(x => x.ActedAtUtc))
+                {
+                    var decisionClass = h.Decision == ApprovalDecision.Approved ? "text-success" : "text-danger";
+                    var decisionIcon = h.Decision == ApprovalDecision.Approved 
+                        ? "<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='currentColor' class='me-1' viewBox='0 0 16 16'><path d='M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z'/></svg>"
+                        : "<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='currentColor' class='me-1' viewBox='0 0 16 16'><path d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/><path d='M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z'/></svg>";
+                    <tr>
+                        <td><small class="text-muted">@h.ActedAtUtc.ToString("MMM dd, yyyy HH:mm")</small></td>
+                        <td><span class="badge bg-light text-dark">@h.Stage</span></td>
+                        <td class="@decisionClass">@Html.Raw(decisionIcon)@h.Decision</td>
+                        <td>@(h.Actor?.Email ?? "System")</td>
+                        <td class="text-muted small">@(string.IsNullOrEmpty(h.Comment) ? "—" : h.Comment)</td>
+                    </tr>
+                }
+                @if (!Model.ApprovalHistory.Any())
+                {
+                    <tr><td colspan="5" class="text-center text-muted py-4"><em>No approval actions yet.</em></td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<a class="btn btn-outline-primary" asp-action="Index">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+    Back to Documents
+</a>

@@ -1,0 +1,156 @@
+@using PCG.Authorization
+@model PCG.Models.ViewModels.HomeStatsViewModel
+@{
+    ViewData["Title"] = "Home";
+    var isExternal = User.IsExternalUser();
+    var stats = Model;
+}
+
+<div class="pcg-hero px-4 py-5 my-4">
+    @if (isExternal)
+    {
+        <h1 class="display-5">Welcome, External Customer</h1>
+        <p class="lead col-lg-9 mx-auto mt-3 mb-0">
+            Upload your invoices and credit notes for processing. Your documents will go through our 
+            three-stage approval workflow (Reviewer → Manager → Admin) and you'll be notified when approved.
+        </p>
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4 pcg-hero-actions">
+            <a class="btn btn-primary btn-lg px-4" asp-controller="Documents" asp-action="Upload">Upload Document</a>
+            <a class="btn btn-outline-secondary btn-lg px-4" asp-controller="Documents" asp-action="Index">My Documents</a>
+        </div>
+    }
+    else if (User.Identity?.IsAuthenticated == true)
+    {
+        <h1 class="display-5">Welcome back</h1>
+        <p class="lead col-lg-9 mx-auto mt-3 mb-0">
+            Secure invoice &amp; credit note management with three-stage approval workflow.
+        </p>
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4 pcg-hero-actions">
+            <a class="btn btn-primary btn-lg px-4" asp-controller="Documents" asp-action="Index">View Documents</a>
+            @if (User.CanUpload())
+            {
+                <a class="btn btn-outline-secondary btn-lg px-4" asp-controller="Documents" asp-action="Upload">Upload</a>
+            }
+            <a class="btn btn-outline-secondary btn-lg px-4" asp-controller="Reports" asp-action="Index">Reports</a>
+        </div>
+    }
+    else
+    {
+        <h1 class="display-5">Secure invoice &amp; credit note management</h1>
+        <p class="lead col-lg-9 mx-auto mt-3 mb-0">
+            Role-based access, AI-assisted extraction, three-stage approval (Reviewer → Manager → Admin),
+            duplicate detection, reporting with PDF/Excel export, and AI-driven spend insights.
+        </p>
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4 pcg-hero-actions">
+            <a class="btn btn-primary btn-lg px-4" asp-area="Identity" asp-page="/Account/Login">Log in</a>
+            <a class="btn btn-outline-secondary btn-lg px-4" asp-area="Identity" asp-page="/Account/Register">Register as External User</a>
+        </div>
+        <p class="text-muted small mt-4 mb-0 col-lg-9 mx-auto">
+            Demo accounts (password <span class="pcg-code">DemoPcg2026!</span>):
+            <strong>admin@pcg.demo</strong> (admin + final approver),
+            <strong>reviewer@pcg.demo</strong> (approver stage 1),
+            <strong>manager@pcg.demo</strong> (approver stage 2),
+            <strong>external@pcg.demo</strong> (external customer - upload only),
+            <strong>viewer@pcg.demo</strong> (read-only).
+        </p>
+    }
+</div>
+
+@* Stats Dashboard for Internal Users *@
+@if (User.Identity?.IsAuthenticated == true && !isExternal && stats != null)
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="text-primary" viewBox="0 0 16 16"><path d="M4 3.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-1zm0 2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-1zm0 2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-1z"/><path d="M2 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zM1 4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4z"/></svg>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="h4 mb-1">@stats.TotalDocuments</h3>
+                        <p class="text-muted mb-0 small">Total Documents</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="text-warning" viewBox="0 0 16 16"><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="h4 mb-1">@stats.TotalPending</h3>
+                        <p class="text-muted mb-0 small">Pending Approval</p>
+                        <small class="text-muted" style="font-size: 0.7rem;">R:@stats.PendingReviewer M:@stats.PendingManager A:@stats.PendingAdmin</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="text-success" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="h4 mb-1">@stats.Approved</h3>
+                        <p class="text-muted mb-0 small">Approved</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="flex-shrink-0 me-3">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="text-info" viewBox="0 0 16 16"><path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/></svg>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="h4 mb-1">R @stats.TotalAmount.ToString("N0")</h3>
+                        <p class="text-muted mb-0 small">Approved Value</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Quick Actions Row *@
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Documents Awaiting Review</h6>
+                    <p class="card-text text-muted small">Review and approve pending documents at your stage.</p>
+                    <a asp-controller="Documents" asp-action="Index" class="btn btn-sm btn-outline-primary">View Pending</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">Generate Reports</h6>
+                    <p class="card-text text-muted small">View spending reports, vendor analysis, and export data.</p>
+                    <a asp-controller="Reports" asp-action="Index" class="btn btn-sm btn-outline-primary">Go to Reports</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">AI Insights</h6>
+                    <p class="card-text text-muted small">Get AI-powered analysis of spending trends and anomalies.</p>
+                    <a asp-controller="Insights" asp-action="Index" class="btn btn-sm btn-outline-primary">View Insights</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}

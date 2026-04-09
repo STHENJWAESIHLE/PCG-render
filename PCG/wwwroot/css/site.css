@@ -1,0 +1,31 @@
+/* PCG — base rules (theme loaded via _Layout: theme/tokens, layout, components) */
+
+html {
+  font-size: 15px;
+  scroll-behavior: smooth;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+body {
+  margin: 0;
+}
+
+.pcg-app .btn:focus-visible,
+.pcg-app .btn-link:focus-visible,
+.pcg-app .form-control:focus-visible,
+.pcg-app .form-check-input:focus-visible,
+.pcg-app .nav-link:focus-visible {
+  outline: none;
+  box-shadow: var(--pcg-focus);
+}
+
+/* Identity / floating labels compatibility */
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
+  color: var(--pcg-muted);
+}

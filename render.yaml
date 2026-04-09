@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: pcg-app
+    runtime: dotnet
+    plan: free
+    rootDir: PCG
+    buildCommand: dotnet publish PCG.csproj -c Release -o out
+    startCommand: dotnet out/PCG.dll
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Render
+      - key: DatabaseProvider
+        value: sqlite
+      - key: InvoiceExtraction__OpenAIApiKey
+        sync: false
+      - key: Insights__OpenAIApiKey
+        sync: false

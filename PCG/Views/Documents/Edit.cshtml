@@ -1,0 +1,47 @@
+@model PCG.Models.ViewModels.DocumentEditVm
+@{
+    ViewData["Title"] = "Edit extracted fields";
+}
+
+<div class="pcg-page-header">
+    <h1 class="pcg-title">Edit fields</h1>
+    <p class="text-muted mb-0">Allowed while status is <strong>Pending Reviewer</strong> (uploader) or for an admin until approved.</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="pcg-card">
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+                <div class="mb-3">
+                    <label asp-for="InvoiceNumber" class="form-label fw-semibold"></label>
+                    <input asp-for="InvoiceNumber" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Vendor" class="form-label fw-semibold"></label>
+                    <input asp-for="Vendor" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="DocumentDate" class="form-label fw-semibold"></label>
+                    <input asp-for="DocumentDate" class="form-control" type="date" />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Amount" class="form-label fw-semibold"></label>
+                    <input asp-for="Amount" class="form-control" type="number" step="0.01" />
+                </div>
+                <div class="mb-4">
+                    <label asp-for="VatAmount" class="form-label fw-semibold"></label>
+                    <input asp-for="VatAmount" class="form-control" type="number" step="0.01" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a class="btn btn-link text-decoration-none" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
